@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SchoolBus Pro - Hệ thống Quản trị & Theo dõi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#f59e0b', secondary: '#1e3a8a' },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
+        #parentMap { height: 450px; width: 100%; border-radius: 1rem; z-index: 1; }
+        .view-section, .admin-section { display: none; opacity: 0; }
+        .view-section.active, .admin-section.active { display: block; animation: fadeInUp 0.5s forwards; }
+        .tab-btn.active { background-color: #1e3a8a; color: white; }
+        #appContainer { display: none; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- LOGIN -->
+    <div id="loginContainer" class="min-h-screen flex items-center justify-center bg-slate-100 px-4 transition-opacity duration-500">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full border border-gray-100 animate-fade-in-up">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-primary rounded-2xl mb-4 shadow-xl rotate-3 transition-transform hover:rotate-6">
+                    <i class="fa-solid fa-bus text-white text-4xl"></i>
+                </div>
+                <h1 class="text-3xl font-black text-secondary tracking-tighter">EDUBUS <span class="text-primary text-xl uppercase font-bold">Pro</span></h1>
+                <p class="text-gray-500 text-sm mt-2">Đăng nhập: admin, hs01 (Học sinh), ph01 (Phụ huynh), tx01 (Tài xế). Pass: 1</p>
+            </div>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-5">
+                <div>
+                    <input type="text" id="username" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition" placeholder="Tài khoản" required>
+                </div>
+                <div>
+                    <input type="password" id="password" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition" placeholder="Mật khẩu" required>
+                </div>
+                <div id="loginError" class="text-red-500 text-xs hidden italic text-center font-medium animate-pulse">Sai thông tin đăng nhập!</div>
+                <button type="submit" class="w-full bg-secondary hover:bg-blue-900 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 uppercase tracking-widest">
+                    Đăng nhập
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appContainer">
+        <!-- NAVBAR -->
+        <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 flex justify-between h-20 items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-primary p-2 rounded-lg shadow-md animate-pulse-slow">
+                        <i class="fa-solid fa-bus-simple text-white text-xl"></i>
+                    </div>
+                    <span class="font-black text-2xl text-secondary tracking-tighter">EDUBUS</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p id="navUserName" class="text-sm font-bold text-gray-800 leading-none"></p>
+                        <p id="navUserRole" class="text-[10px] text-primary font-bold uppercase tracking-widest"></p>
+                    </div>
+                    <button onclick="logout()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition shadow-sm">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-4 py-8">
+            
+            <!-- STUDENT VIEW -->
+            <div id="studentView" class="view-section space-y-6 max-w-md mx-auto">
+                <div class="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-secondary to-blue-500 opacity-10"></div>
+                    <div class="w-24 h-24 mx-auto bg-blue-50 rounded-full flex items-center justify-center text-secondary border-4 border-white shadow-md relative z-10 mb-4">
+                        <i class="fa-solid fa-user-graduate text-4xl"></i>
+                    </div>
+                    <h2 id="svName" class="text-2xl font-black text-gray-900"></h2>
+                    <p id="svClass" class="text-sm font-bold text-gray-500 mb-6"></p>
+                    
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-dashed border-gray-300">
+                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Thẻ Lên Xe (Boarding Pass)</p>
+                        <div class="w-48 h-48 mx-auto bg-white p-2 rounded-xl shadow-sm border border-gray-200 mb-4 flex items-center justify-center">
+                            <i class="fa-solid fa-qrcode text-[140px] text-gray-800"></i>
+                        </div>
+                        <p class="text-[10px] text-gray-400 italic">Đưa mã này cho thiết bị quét trên xe để xác nhận lên xe.</p>
+                        
+                        <div class="mt-4 flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 text-left">
+                            <div>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Trạm của bạn</p>
+                                <p class="text-sm font-black text-secondary" id="svStopName">Trạm 1</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Giờ đón</p>
+                                <p class="text-sm font-black text-primary" id="svStopEta">06:15</p>
+                            </div>
+                        </div>
+                        <button onclick="simulateScanQR()" class="mt-4 w-full bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-600 transition text-sm flex justify-center items-center">
+                            <i class="fa-solid fa-expand mr-2"></i> Giả lập quét lên xe
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARENT VIEW -->
+            <div id="parentView" class="view-section space-y-8">
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 pb-12">
+                    <div class="flex justify-between items-end mb-4">
+                        <h3 class="font-black text-secondary uppercase tracking-widest text-sm italic">Tiến trình di chuyển</h3>
+                        <span id="progressText" class="text-xs font-bold text-primary">0%</span>
+                    </div>
+                    <div class="relative w-full h-3 bg-gray-100 rounded-full mt-4">
+                        <div id="busProgressBar" class="absolute top-0 left-0 h-full bg-green-500 rounded-full transition-all duration-1000 z-0"></div>
+                        <div id="progressMarkers" class="absolute top-0 left-0 w-full h-full z-10"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 space-y-4">
+                        <div id="parentMap" class="shadow-2xl border-4 border-white"></div>
+                    </div>
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="font-black text-secondary uppercase tracking-widest text-sm mb-6">Lộ trình hôm nay</h3>
+                        <div id="timelineContainer" class="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DRIVER VIEW -->
+            <div id="driverView" class="view-section space-y-6 max-w-2xl mx-auto">
+                <div id="driverSetup" class="bg-white rounded-3xl shadow-lg p-8 text-center animate-fade-in-up">
+                    <h2 class="text-2xl font-black text-secondary mb-2">Xin chào, <span id="dvName"></span></h2>
+                    <p class="text-gray-500 text-sm mb-6">Chọn xe bạn sẽ vận hành hôm nay.</p>
+                    <select id="dvBusSelect" class="w-full text-center text-lg font-bold px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none">
+                        <option value="">-- Chọn xe --</option>
+                    </select>
+                    <button onclick="startDriverShift()" class="w-full mt-4 bg-secondary text-white font-bold py-4 rounded-xl shadow-lg uppercase tracking-widest hover:bg-blue-900 transition">
+                        Bắt đầu chuyến đi
+                    </button>
+                </div>
+
+                <div id="driverDashboard" class="hidden space-y-6 animate-fade-in-up">
+                    <div class="bg-secondary text-white rounded-3xl p-6 shadow-lg flex justify-between items-center">
+                        <div>
+                            <p class="text-xs text-blue-200 uppercase font-bold tracking-widest">Xe đang chạy</p>
+                            <h2 id="dvCurrentPlate" class="text-3xl font-black"></h2>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-blue-200 uppercase font-bold tracking-widest">Tổng HS</p>
+                            <h2 id="dvTotalStudents" class="text-3xl font-black text-primary"></h2>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 bg-gray-50 border-b border-gray-100"><h3 class="font-black text-secondary uppercase text-sm">Danh sách trạm</h3></div>
+                        <div id="driverStopsList" class="divide-y divide-gray-100"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN VIEW -->
+            <div id="adminView" class="view-section space-y-6">
+                <div class="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-100 space-x-2 overflow-x-auto custom-scrollbar">
+                    <button onclick="switchAdminTab('dashboard', this)" class="tab-btn active px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap">Tổng quan Xe</button>
+                    <button onclick="switchAdminTab('manage-students', this)" class="tab-btn px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap">DS Học sinh</button>
+                    <button onclick="switchAdminTab('manage-stops', this)" class="tab-btn px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap"><i class="fa-solid fa-map-location-dot mr-1"></i> QL Trạm & Tuyến</button>
+                    <button onclick="switchAdminTab('manage-accounts', this)" class="tab-btn px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap"><i class="fa-solid fa-user-plus mr-1"></i> Tài khoản</button>
+                    <button onclick="simulateAbsenceCheck()" class="ml-auto px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition whitespace-nowrap border border-red-100">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Quét vắng & SMS
+                    </button>
+                </div>
+
+                <!-- Admin: Dashboard -->
+                <div id="dashboard" class="admin-section active space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="adminBusCards"></div>
+                    <div id="busDetailMatrix" class="hidden bg-white p-6 rounded-3xl shadow-lg border border-gray-200 animate-fade-in-up">
+                        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                            <div>
+                                <h3 class="text-xl font-black text-secondary uppercase" id="matrixBusName">Chi tiết xe</h3>
+                                <p class="text-xs text-gray-500">Ma trận theo dõi lộ trình học sinh</p>
+                            </div>
+                            <div class="relative w-full md:w-64">
+                                <input type="text" id="matrixSearch" onkeyup="filterMatrix()" placeholder="Tìm tên học sinh..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border rounded-xl outline-none text-sm focus:ring-2 focus:ring-primary">
+                                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar pb-4">
+                            <table class="w-full text-left border-collapse min-w-[800px]">
+                                <thead>
+                                    <tr id="matrixHeader" class="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b-2 border-gray-200"></tr>
+                                </thead>
+                                <tbody id="matrixBody" class="divide-y divide-gray-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin: Manage Students -->
+                <div id="manage-students" class="admin-section space-y-6">
+                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="font-black text-secondary uppercase italic">Danh sách theo lớp</h4>
+                            <select id="classFilter" onchange="renderStudentList()" class="px-4 py-2 border rounded-xl bg-gray-50 font-bold outline-none">
+                                <option value="ALL">Tất cả các lớp</option>
+                            </select>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-left text-[10px] font-black text-gray-400 uppercase border-b border-gray-200">
+                                        <th class="pb-3 px-4">Học sinh</th>
+                                        <th class="pb-3 px-4">Lớp</th>
+                                        <th class="pb-3 px-4">Tuyến xe</th>
+                                        <th class="pb-3 px-4">Trạm đón</th>
+                                        <th class="pb-3 px-4 text-center">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminStudentListTable" class="divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin: Manage Stops -->
+                <div id="manage-stops" class="admin-section space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="font-black text-secondary uppercase tracking-widest text-sm mb-6 border-b pb-2">Thêm Trạm Mới (AI Đề xuất tuyến)</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">Tên Trạm / Vị trí</label>
+                                    <input type="text" id="newStopName" class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary" placeholder="VD: Ngã 3 Đồng Khởi">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500">Vĩ độ (Lat)</label>
+                                        <input type="text" id="newStopLat" value="10.2650" class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500">Kinh độ (Lng)</label>
+                                        <input type="text" id="newStopLng" value="105.9820" class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary">
+                                    </div>
+                                </div>
+                                <button onclick="calculateAndSuggestBus()" class="w-full mt-2 bg-secondary text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-900 transition flex items-center justify-center">
+                                    <i class="fa-solid fa-calculator mr-2"></i> Tính toán khoảng cách & Đề xuất xe
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative">
+                            <div class="absolute top-4 right-4 text-primary animate-pulse"><i class="fa-solid fa-robot text-2xl"></i></div>
+                            <h3 class="font-black text-secondary uppercase tracking-widest text-sm mb-6 border-b pb-2">Hệ thống đề xuất</h3>
+                            <div id="suggestionResults" class="text-center text-gray-400 text-sm mt-10 italic">
+                                Nhập thông tin trạm và bấm tính toán để hệ thống tìm xe phù hợp nhất dựa trên vị trí địa lý.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h4 class="font-black text-secondary uppercase italic mb-4">Danh sách Trạm Toàn Hệ Thống</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-left text-[10px] font-black text-gray-400 uppercase border-b border-gray-200">
+                                        <th class="pb-3 px-4">ID</th>
+                                        <th class="pb-3 px-4">Tên Trạm</th>
+                                        <th class="pb-3 px-4">Tọa độ</th>
+                                        <th class="pb-3 px-4">Giờ ETA</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminAllStopsTable" class="divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin: Manage Accounts -->
+                <div id="manage-accounts" class="admin-section space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                        <!-- Create Account Form -->
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="font-black text-secondary uppercase tracking-widest text-sm mb-6 border-b pb-3">
+                                <i class="fa-solid fa-user-plus mr-2 text-primary"></i>Tạo Tài Khoản Mới
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500">Họ và tên</label>
+                                        <input type="text" id="newUserName" placeholder="Nguyễn Văn A"
+                                            class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500">Tên đăng nhập</label>
+                                        <input type="text" id="newUserUsername" placeholder="hs05"
+                                            class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500">Mật khẩu</label>
+                                        <input type="password" id="newUserPassword" placeholder="••••••"
+                                            class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500">Vai trò</label>
+                                        <select id="newUserRole" onchange="toggleRoleFields()"
+                                            class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold">
+                                            <option value="student">Học sinh</option>
+                                            <option value="parent">Phụ huynh</option>
+                                            <option value="driver">Tài xế</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Student-only fields -->
+                                <div id="studentFields" class="space-y-4 border-t pt-4">
+                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Thông tin học sinh</p>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-xs font-bold text-gray-500">Lớp</label>
+                                            <input type="text" id="newUserClass" placeholder="11T1"
+                                                class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-gray-500">Tuyến xe</label>
+                                            <select id="newUserBusId"
+                                                class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold">
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500">Trạm đón</label>
+                                        <select id="newUserStopId"
+                                            class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold">
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Parent-only fields -->
+                                <div id="parentFields" class="hidden space-y-4 border-t pt-4">
+                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Liên kết con</p>
+                                    <div>
+                                        <label class="text-xs font-bold text-gray-500">Chọn học sinh (con)</label>
+                                        <select id="newUserChildId"
+                                            class="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold">
+                                            <option value="">-- Không liên kết --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button onclick="createAccount()"
+                                    class="w-full mt-2 bg-secondary text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-900 transition flex items-center justify-center text-sm">
+                                    <i class="fa-solid fa-plus mr-2"></i> Tạo tài khoản
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Account list -->
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                                <h3 class="font-black text-secondary uppercase tracking-widest text-sm">
+                                    <i class="fa-solid fa-users mr-2 text-primary"></i>Danh sách tài khoản
+                                </h3>
+                                <select id="accountRoleFilter" onchange="renderAccountList()"
+                                    class="px-3 py-1.5 border rounded-xl bg-gray-50 font-bold outline-none text-xs">
+                                    <option value="ALL">Tất cả</option>
+                                    <option value="student">Học sinh</option>
+                                    <option value="parent">Phụ huynh</option>
+                                    <option value="driver">Tài xế</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div id="accountListContainer" class="space-y-2 max-h-[480px] overflow-y-auto custom-scrollbar pr-1"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-[100] flex items-center gap-3">
+        <i class="fa-solid fa-comment-sms text-primary text-xl"></i>
+        <div>
+            <p class="text-sm font-bold" id="toastTitle">Hệ thống</p>
+            <p class="text-xs text-gray-300" id="toastMsg">Tin nhắn</p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // =====================================================================
+        // CONFIG — change this to your deployed backend URL
+        // =====================================================================
+        const API_BASE_URL = "http://localhost:3000/api";
+
+        // ── Global state ──────────────────────────────────────────────────────
+        let db = { users: [], buses: [], stops: [] };
+        let activeUser = null;
+        let busMap, currentDriverBus = null, activeBusIdForAdmin = null;
+
+        // =====================================================================
+        // HELPERS — normalise id/busId so Number vs String comparisons work
+        // =====================================================================
+        /**
+         * After fetching from the API every user has an `id` string (MongoDB _id).
+         * busId is stored as a string matching Bus.id (Number).
+         * We coerce with == (loose equality) everywhere to handle mixed types.
+         */
+        function busIdMatch(a, b) { return String(a) === String(b); }
+        function stopIdMatch(a, b) { return Number(a) === Number(b); }
+
+        // =====================================================================
+        // AUTH
+        // =====================================================================
+        async function handleLogin(e) {
+            e.preventDefault();
+            const un = document.getElementById('username').value;
+            const pw = document.getElementById('password').value;
+            try {
+                const res = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: un, password: pw })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    activeUser = data.user;
+                    await loadSystemData();
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    initUI();
+                } else {
+                    showError();
+                }
+            } catch (err) {
+                console.error("Login error:", err);
+                showToast("Lỗi", "Không thể kết nối đến Máy chủ!", true);
+            }
+        }
+
+        async function loadSystemData() {
+            try {
+                const [uR, bR, sR] = await Promise.all([
+                    fetch(`${API_BASE_URL}/users`),
+                    fetch(`${API_BASE_URL}/buses`),
+                    fetch(`${API_BASE_URL}/stops`)
+                ]);
+                if (uR.ok) db.users = await uR.json();
+                if (bR.ok) db.buses = await bR.json();
+                if (sR.ok) db.stops = await sR.json();
+            } catch (err) {
+                console.error("loadSystemData error:", err);
+            }
+        }
+
+        function showError() {
+            const err = document.getElementById('loginError');
+            err.classList.remove('hidden');
+            setTimeout(() => err.classList.add('hidden'), 3000);
+        }
+        function logout() { location.reload(); }
+
+        // =====================================================================
+        // INIT UI
+        // =====================================================================
+        function initUI() {
+            document.getElementById('navUserName').innerText = activeUser.name;
+            let roleText = "";
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+
+            if (activeUser.role === 'admin') {
+                roleText = "Hệ thống quản trị";
+                document.getElementById('adminView').classList.add('active');
+                renderAdminDashboard();
+                renderStudentList();
+                renderAllStopsTable();
+                populateClassFilter();
+                populateAccountFormDropdowns();
+                renderAccountList();
+            } else if (activeUser.role === 'driver') {
+                roleText = "Tài xế nội bộ";
+                document.getElementById('driverView').classList.add('active');
+                document.getElementById('dvName').innerText = activeUser.name;
+                populateDriverBusDropdown();
+            } else if (activeUser.role === 'student') {
+                roleText = "Học sinh";
+                document.getElementById('studentView').classList.add('active');
+                document.getElementById('svName').innerText = activeUser.name;
+                document.getElementById('svClass').innerText = `LỚP: ${activeUser.class}`;
+                // FIX: use Number coercion for startStopId comparison
+                const stp = db.stops.find(s => stopIdMatch(s.id, activeUser.startStopId));
+                document.getElementById('svStopName').innerText = stp ? stp.name : "Chưa xếp trạm";
+                document.getElementById('svStopEta').innerText  = stp ? stp.eta  : "--:--";
+            } else if (activeUser.role === 'parent') {
+                roleText = "Phụ huynh";
+                document.getElementById('parentView').classList.add('active');
+                renderParentView();
+            }
+            document.getElementById('navUserRole').innerText = roleText;
+        }
+
+        // =====================================================================
+        // DRIVER
+        // =====================================================================
+        function startDriverShift() {
+            const busId = document.getElementById('dvBusSelect').value;
+            if (!busId) return showToast("Lỗi", "Vui lòng chọn xe trước khi bắt đầu.", true);
+            const bus = db.buses.find(b => busIdMatch(b.id, busId));
+            if (bus) {
+                currentDriverBus = bus;
+                document.getElementById('driverSetup').classList.add('hidden');
+                const dash = document.getElementById('driverDashboard');
+                dash.classList.remove('hidden');
+                dash.classList.add('active');
+                document.getElementById('dvCurrentPlate').innerText = bus.plate;
+                // FIX: busId stored as number in Bus model, compare with String coercion
+                const totalSt = db.users.filter(u => u.role === 'student' && busIdMatch(u.busId, bus.id)).length;
+                document.getElementById('dvTotalStudents').innerText = totalSt;
+                renderDriverStops();
+            } else {
+                showToast("Lỗi hệ thống", "Không tìm thấy biển số xe trong hệ thống!", true);
+            }
+        }
+
+        function renderDriverStops() {
+            const list = document.getElementById('driverStopsList');
+            list.innerHTML = db.stops.map((s, idx) => {
+                // FIX: use busIdMatch for stop → bus comparison
+                const stCount = db.users.filter(u =>
+                    u.role === 'student' &&
+                    busIdMatch(u.busId, currentDriverBus.id) &&
+                    stopIdMatch(u.startStopId, s.id)
+                ).length;
+                const statusColor = s.status === 'passed' ? 'text-green-500' : (s.status === 'next' ? 'text-primary' : 'text-gray-400');
+                return `
+                    <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center font-bold text-xs ${statusColor}">${idx + 1}</div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-sm">${s.name}</h4>
+                                <p class="text-[10px] text-gray-500">ETA: ${s.eta} ${s.actual !== '--:--' ? `• Tới: ${s.actual}` : ''}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="bg-blue-50 text-secondary text-xs font-black px-3 py-1 rounded-full"><i class="fa-solid fa-users mr-1"></i> ${stCount}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // =====================================================================
+        // STUDENT — QR scan
+        // =====================================================================
+        async function simulateScanQR() {
+            try {
+                // FIX: use _id (MongoDB ObjectId string) as studentId
+                const studentId = activeUser._id || activeUser.id;
+                const res = await fetch(`${API_BASE_URL}/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ studentId })
+                });
+                if (res.ok) {
+                    activeUser.isBoarded = true;
+                    const u = db.users.find(u => (u._id || u.id) === studentId);
+                    if (u) u.isBoarded = true;
+                    showToast("Thành công", `Đã xác nhận lên xe lúc ${new Date().toLocaleTimeString()}`);
+                    const btn = document.querySelector('#studentView button');
+                    btn.innerHTML = '<i class="fa-solid fa-check-circle mr-2"></i> Đã điểm danh lên xe';
+                    btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    btn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    btn.disabled = true;
+                } else {
+                    const err = await res.json();
+                    showToast("Lỗi", err.error || "Cập nhật điểm danh thất bại", true);
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Lỗi", "Mất kết nối máy chủ", true);
+            }
+        }
+
+        // =====================================================================
+        // ADMIN
+        // =====================================================================
+        function switchAdminTab(tabId, btn) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function renderAdminDashboard() {
+            const cards = document.getElementById('adminBusCards');
+            cards.innerHTML = db.buses.map(b => {
+                const totalHs   = db.users.filter(u => u.role === 'student' && busIdMatch(u.busId, b.id)).length;
+                const boardedHs = db.users.filter(u => u.role === 'student' && busIdMatch(u.busId, b.id) && u.isBoarded).length;
+                return `
+                    <div onclick="showBusMatrix(${b.id})" class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm hover:shadow-lg transition cursor-pointer transform hover:-translate-y-1">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-bus text-xl"></i></div>
+                            <span class="text-xs font-black bg-green-50 text-green-600 px-2 py-1 rounded-lg">Đang chạy</span>
+                        </div>
+                        <h3 class="text-xl font-black text-secondary">${b.plate}</h3>
+                        <p class="text-xs text-gray-500 font-bold mt-2">Học sinh: <span class="text-primary">${boardedHs}/${totalHs}</span> đã lên</p>
+                    </div>`;
+            }).join('');
+        }
+
+        function showBusMatrix(busId) {
+            activeBusIdForAdmin = busId;
+            const bus = db.buses.find(b => busIdMatch(b.id, busId));
+            document.getElementById('matrixBusName').innerText = `Xe: ${bus.plate}`;
+            document.getElementById('busDetailMatrix').classList.remove('hidden');
+            renderMatrixBody();
+        }
+
+        function renderMatrixBody(searchQuery = "") {
+            if (!activeBusIdForAdmin) return;
+            const thead = document.getElementById('matrixHeader');
+            let headerHTML = `<th class="py-3 px-4 w-48 sticky left-0 bg-gray-50 z-10">Tên Học Sinh</th>`;
+            db.stops.forEach(s => {
+                headerHTML += `<th class="py-3 px-4 text-center whitespace-nowrap"><div class="w-20 truncate mx-auto" title="${s.name}">${s.name}</div></th>`;
+            });
+            thead.innerHTML = headerHTML;
+
+            const tbody = document.getElementById('matrixBody');
+            let studentsOnBus = db.users.filter(u => u.role === 'student' && busIdMatch(u.busId, activeBusIdForAdmin));
+            if (searchQuery) studentsOnBus = studentsOnBus.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            tbody.innerHTML = studentsOnBus.map(st => {
+                let rowHTML = `
+                    <td class="py-3 px-4 font-bold text-gray-800 sticky left-0 bg-white z-10 shadow-[1px_0_0_0_#f3f4f6]">
+                        ${st.name}<br><span class="text-[10px] text-gray-400">Lớp: ${st.class}</span>
+                    </td>`;
+                db.stops.forEach(stop => {
+                    let icon = '';
+                    // FIX: both ids are numbers now, use Number coercion
+                    if (Number(stop.id) >= Number(st.startStopId)) {
+                        if (st.isBoarded && stop.status === 'passed')       icon = '<i class="fa-solid fa-circle-check text-green-500 text-lg"></i>';
+                        else if (!st.isBoarded && stop.status === 'passed') icon = '<i class="fa-solid fa-xmark text-red-500 text-lg"></i>';
+                        else                                                 icon = '<i class="fa-solid fa-minus text-gray-200"></i>';
+                    }
+                    rowHTML += `<td class="py-3 px-4 text-center">${icon}</td>`;
+                });
+                return `<tr>${rowHTML}</tr>`;
+            }).join('');
+        }
+
+        function filterMatrix() { renderMatrixBody(document.getElementById('matrixSearch').value); }
+
+        function populateClassFilter() {
+            const classes = [...new Set(
+                db.users.filter(u => u.role === 'student' && u.class).map(u => u.class)
+            )].sort();
+            const sel = document.getElementById('classFilter');
+            sel.innerHTML = `<option value="ALL">Tất cả các lớp</option>` +
+                classes.map(c => `<option value="${c}">Lớp ${c}</option>`).join('');
+        }
+
+        function populateDriverBusDropdown() {
+            const sel = document.getElementById('dvBusSelect');
+            if (!sel) return;
+            sel.innerHTML = `<option value="">-- Chọn xe --</option>` +
+                db.buses.map(b => `<option value="${b.id}">${b.plate} (${b.route || 'Tuyến ' + b.id})</option>`).join('');
+        }
+
+        function renderStudentList() {
+            const filter = document.getElementById('classFilter').value;
+            let list = db.users.filter(u => u.role === 'student');
+            if (filter !== 'ALL') list = list.filter(u => u.class === filter);
+
+            document.getElementById('adminStudentListTable').innerHTML = list.map(st => {
+                const bus  = db.buses.find(b => busIdMatch(b.id, st.busId));
+                const stop = db.stops.find(s => stopIdMatch(s.id, st.startStopId));
+                const statusBadge = st.isBoarded
+                    ? `<span class="bg-green-100 text-green-600 px-2 py-1 rounded text-[10px] font-bold">Đã lên xe</span>`
+                    : `<span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-[10px] font-bold">Chưa lên</span>`;
+                return `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="py-3 px-4 font-bold">${st.name}</td>
+                        <td class="py-3 px-4 text-sm text-gray-500">${st.class || '—'}</td>
+                        <td class="py-3 px-4 text-sm font-mono text-secondary">${bus ? bus.plate : '---'}</td>
+                        <td class="py-3 px-4 text-xs text-gray-500">${stop ? stop.name : '---'}</td>
+                        <td class="py-3 px-4 text-center">${statusBadge}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function simulateAbsenceCheck() {
+            const absentStudents = db.users.filter(u =>
+                u.role === 'student' &&
+                !u.isBoarded &&
+                db.stops.find(s => stopIdMatch(s.id, u.startStopId))?.status === 'passed'
+            );
+            if (absentStudents.length > 0) {
+                const names = absentStudents.map(s => s.name).join(', ');
+                showToast("CẢNH BÁO VẮNG", `Phát hiện vắng: ${names}. Đang gửi SMS đến phụ huynh...`, true);
+                renderStudentList();
+                renderMatrixBody();
+            } else {
+                showToast("Báo cáo", "Tất cả học sinh theo tuyến đều đã điểm danh đủ.");
+            }
+        }
+
+        // ── Distance calculation (Haversine) ──────────────────────────────────
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLon = (lon2 - lon1) * (Math.PI / 180);
+            const a = Math.sin(dLat / 2) ** 2 +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function calculateAndSuggestBus() {
+            const name = document.getElementById('newStopName').value.trim();
+            const lat  = parseFloat(document.getElementById('newStopLat').value);
+            const lng  = parseFloat(document.getElementById('newStopLng').value);
+            if (!name || isNaN(lat) || isNaN(lng)) {
+                showToast("Lỗi", "Vui lòng nhập đầy đủ tên và tọa độ hợp lệ.", true);
+                return;
+            }
+            let closestStop = null, minDistance = Infinity;
+            db.stops.forEach(stop => {
+                const dist = getDistanceFromLatLonInKm(lat, lng, stop.lat, stop.lng);
+                if (dist < minDistance) { minDistance = dist; closestStop = stop; }
+            });
+
+            const resDiv = document.getElementById('suggestionResults');
+            let html = `
+                <div class="text-left animate-fade-in-up">
+                    <p class="text-sm text-gray-600 mb-2">Trạm <strong class="text-secondary">${name}</strong> gần nhất với trạm <strong>${closestStop.name}</strong> (Cách khoảng <span class="text-primary font-bold">${minDistance.toFixed(2)} km</span>).</p>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-4 mb-2">Tuyến xe đề xuất:</p>
+                    <div class="space-y-3">`;
+            db.buses.forEach(bus => {
+                const suitability = Math.max(50, 100 - minDistance * 10);
+                // FIX: use bus._id (MongoDB ObjectId) when calling addStopToSystem
+                const busMongoId = bus._id || bus.id;
+                html += `
+                    <div class="border border-gray-100 rounded-xl p-3 flex justify-between items-center hover:bg-blue-50 transition cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-white border border-gray-200 p-2 rounded-lg text-secondary"><i class="fa-solid fa-bus"></i></div>
+                            <div>
+                                <p class="font-bold text-sm">Xe ${bus.plate}</p>
+                                <p class="text-[10px] text-gray-500">Sức chứa: ${bus.capacity} chỗ</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-bold text-green-600 mb-1">Phù hợp ${Math.round(suitability)}%</p>
+                            <button onclick="addStopToSystem('${name}', ${lat}, ${lng}, '${busMongoId}')" class="text-[10px] bg-secondary text-white px-3 py-1 rounded-full hover:bg-blue-900 transition">Thêm vào tuyến này</button>
+                        </div>
+                    </div>`;
+            });
+            html += `</div></div>`;
+            resDiv.innerHTML = html;
+        }
+
+        async function addStopToSystem(name, lat, lng, busId) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/stops`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, lat, lng, busId, eta: '--:--', actual: '--:--', status: 'pending' })
+                });
+                if (res.ok) {
+                    const savedStop = await res.json();
+                    db.stops.push(savedStop);
+                    showToast("Thành công", `Đã thêm trạm ${name} vào lộ trình xe!`);
+                    document.getElementById('suggestionResults').innerHTML =
+                        '<div class="text-center text-green-600 text-sm mt-10 italic font-bold"><i class="fa-solid fa-check-circle mr-1"></i> Đã thêm trạm thành công!</div>';
+                    renderAllStopsTable();
+                } else {
+                    const err = await res.json();
+                    showToast("Lỗi", err.error || "Lỗi khi insert vào Database", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi", "Mất kết nối máy chủ", true);
+            }
+        }
+
+        function renderAllStopsTable() {
+            document.getElementById('adminAllStopsTable').innerHTML = db.stops.map(s => `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="py-3 px-4 font-mono text-gray-400">#${s.id}</td>
+                    <td class="py-3 px-4 font-bold text-sm">${s.name}</td>
+                    <td class="py-3 px-4 text-xs text-gray-500">${Number(s.lat).toFixed(4)}, ${Number(s.lng).toFixed(4)}</td>
+                    <td class="py-3 px-4 text-xs font-mono">${s.eta}</td>
+                </tr>`).join('');
+        }
+
+        // =====================================================================
+        // PARENT VIEW
+        // =====================================================================
+        function renderParentView() {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = db.stops.map(s => {
+                let color = s.status === 'passed' ? 'bg-green-500 shadow-green-100' : (s.status === 'next' ? 'bg-primary animate-pulse shadow-orange-100' : 'bg-gray-200');
+                return `
+                    <div class="flex items-start space-x-6 relative">
+                        <div class="w-6 h-6 rounded-full ${color} border-4 border-white shadow-xl z-10 flex items-center justify-center">
+                            ${s.status === 'passed' ? '<i class="fa-solid fa-check text-[8px] text-white"></i>' : ''}
+                        </div>
+                        <div class="flex-1 pb-4">
+                            <div class="flex justify-between">
+                                <h5 class="text-sm font-black ${s.status === 'next' ? 'text-secondary' : 'text-gray-700'}">${s.name}</h5>
+                                <span class="text-[10px] font-mono font-bold text-gray-400">${s.eta}</span>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            const totalStops = db.stops.length;
+            const passed = db.stops.filter(s => s.status === 'passed').length;
+            let progressWidth = 0;
+            if (passed > 0) {
+                progressWidth = ((passed - 1) / (totalStops - 1)) * 100;
+                if (db.stops.find(s => s.status === 'next')) progressWidth += (100 / (totalStops - 1)) * 0.5;
+                else progressWidth = 100;
+            }
+            document.getElementById('busProgressBar').style.width = `${progressWidth}%`;
+            document.getElementById('progressText').innerText = `${Math.round((passed / totalStops) * 100)}%`;
+
+            const markersContainer = document.getElementById('progressMarkers');
+            markersContainer.innerHTML = db.stops.map((s, idx) => {
+                const positionPercent = (idx / (totalStops - 1)) * 100;
+                let dotColorClass = 'bg-gray-300 border-white', textColorClass = 'text-gray-400';
+                if (s.status === 'passed') { dotColorClass = 'bg-green-500 border-white'; textColorClass = 'text-green-600 font-bold'; }
+                else if (s.status === 'next') { dotColorClass = 'bg-primary border-white animate-pulse shadow-md'; textColorClass = 'text-primary font-black'; }
+                let textTransform = '-translate-x-1/2';
+                if (idx === 0) textTransform = 'translate-x-0 left-0';
+                if (idx === totalStops - 1) textTransform = '-translate-x-full right-0';
+                return `
+                    <div class="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-[3px] ${dotColorClass} z-10" style="left: calc(${positionPercent}% - 8px)">
+                        <div class="absolute top-5 ${textTransform} w-24 text-center">
+                            <span class="text-[9px] leading-tight block ${textColorClass} drop-shadow-sm">${s.name}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            setTimeout(initMap, 300);
+        }
+
+        function initMap() {
+            if (!busMap) {
+                busMap = L.map('parentMap').setView([db.stops[0].lat, db.stops[0].lng], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(busMap);
+            }
+            updateMapMarkers();
+        }
+
+        function updateMapMarkers() {
+            if (!busMap) return;
+            busMap.eachLayer(layer => { if (!!layer.toGeoJSON) busMap.removeLayer(layer); });
+            const points = db.stops.map(s => [s.lat, s.lng]);
+            L.polyline(points, { color: '#1e3a8a', weight: 4, dashArray: '8, 12', opacity: 0.5 }).addTo(busMap);
+            db.stops.forEach(s => {
+                const color = s.status === 'passed' ? '#10b981' : (s.status === 'next' ? '#f59e0b' : '#9ca3af');
+                L.circleMarker([s.lat, s.lng], { radius: 6, color: 'white', fillColor: color, fillOpacity: 1, weight: 2 }).addTo(busMap).bindPopup(s.name);
+            });
+            const nextStop = db.stops.find(s => s.status === 'next') || db.stops[db.stops.length - 1];
+            const busIcon = L.divIcon({ html: `<div class="bg-secondary p-2 rounded-xl shadow-xl border-2 border-white scale-110"><i class="fa-solid fa-bus text-white text-xs"></i></div>`, className: '', iconSize: [30, 30] });
+            L.marker([nextStop.lat, nextStop.lng], { icon: busIcon }).addTo(busMap);
+        }
+
+        // =====================================================================
+        // ACCOUNT MANAGEMENT (Admin)
+        // =====================================================================
+        const ROLE_LABELS = { admin: 'Admin', driver: 'Tài xế', student: 'Học sinh', parent: 'Phụ huynh' };
+        const ROLE_COLORS = {
+            admin:   'bg-purple-100 text-purple-700',
+            driver:  'bg-blue-100 text-blue-700',
+            student: 'bg-green-100 text-green-700',
+            parent:  'bg-orange-100 text-orange-700',
+        };
+
+        function populateAccountFormDropdowns() {
+            // Bus dropdown
+            const busSelect = document.getElementById('newUserBusId');
+            busSelect.innerHTML = db.buses.map(b => `<option value="${b.id}">${b.plate}</option>`).join('');
+            // Stop dropdown
+            const stopSelect = document.getElementById('newUserStopId');
+            stopSelect.innerHTML = db.stops.map(s => `<option value="${s.id}">${s.name} (${s.eta})</option>`).join('');
+            // Child (student) dropdown for parents
+            const childSelect = document.getElementById('newUserChildId');
+            const students = db.users.filter(u => u.role === 'student');
+            childSelect.innerHTML = `<option value="">-- Không liên kết --</option>` +
+                students.map(s => `<option value="${s._id || s.id}">${s.name} (${s.class || ''})</option>`).join('');
+        }
+
+        function toggleRoleFields() {
+            const role = document.getElementById('newUserRole').value;
+            document.getElementById('studentFields').classList.toggle('hidden', role !== 'student');
+            document.getElementById('parentFields').classList.toggle('hidden', role !== 'parent');
+        }
+
+        async function createAccount() {
+            const name     = document.getElementById('newUserName').value.trim();
+            const username = document.getElementById('newUserUsername').value.trim();
+            const password = document.getElementById('newUserPassword').value;
+            const role     = document.getElementById('newUserRole').value;
+
+            if (!name || !username || !password)
+                return showToast("Lỗi", "Vui lòng điền đầy đủ họ tên, tên đăng nhập và mật khẩu.", true);
+
+            const payload = { name, username, password, role };
+
+            if (role === 'student') {
+                payload.class       = document.getElementById('newUserClass').value.trim();
+                payload.busId       = document.getElementById('newUserBusId').value;
+                payload.startStopId = Number(document.getElementById('newUserStopId').value);
+                payload.isBoarded   = false;
+            }
+            if (role === 'parent') {
+                const childId = document.getElementById('newUserChildId').value;
+                if (childId) payload.childId = childId;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/users`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    db.users.push(data);
+                    showToast("Thành công", `Đã tạo tài khoản "${username}" (${ROLE_LABELS[role]})!`);
+                    // Clear form
+                    ['newUserName','newUserUsername','newUserPassword','newUserClass'].forEach(id => {
+                        document.getElementById(id).value = '';
+                    });
+                    renderAccountList();
+                    renderStudentList();
+                    populateClassFilter();
+                    renderAdminDashboard();
+                } else {
+                    showToast("Lỗi", data.error || "Không thể tạo tài khoản.", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi", "Mất kết nối máy chủ.", true);
+            }
+        }
+
+        async function deleteAccount(userId, userName) {
+            if (!confirm(`Xoá tài khoản "${userName}"? Hành động này không thể hoàn tác.`)) return;
+            try {
+                const res = await fetch(`${API_BASE_URL}/users/${userId}`, { method: 'DELETE' });
+                if (res.ok) {
+                    db.users = db.users.filter(u => (u._id || u.id) !== userId);
+                    showToast("Đã xoá", `Tài khoản "${userName}" đã bị xoá.`);
+                    renderAccountList();
+                    renderStudentList();
+                    renderAdminDashboard();
+                } else {
+                    showToast("Lỗi", "Không thể xoá tài khoản.", true);
+                }
+            } catch (err) {
+                showToast("Lỗi", "Mất kết nối máy chủ.", true);
+            }
+        }
+
+        function renderAccountList() {
+            const filter = document.getElementById('accountRoleFilter').value;
+            let list = filter === 'ALL' ? db.users : db.users.filter(u => u.role === filter);
+            const container = document.getElementById('accountListContainer');
+
+            if (!list.length) {
+                container.innerHTML = `<p class="text-center text-gray-400 text-sm italic py-8">Không có tài khoản nào.</p>`;
+                return;
+            }
+
+            container.innerHTML = list.map(u => {
+                const userId = u._id || u.id;
+                const badge  = `<span class="text-[10px] font-black px-2 py-0.5 rounded-full ${ROLE_COLORS[u.role] || 'bg-gray-100 text-gray-600'}">${ROLE_LABELS[u.role] || u.role}</span>`;
+                const sub    = u.role === 'student' ? `Lớp ${u.class || '?'} · Xe ${db.buses.find(b => busIdMatch(b.id, u.busId))?.plate || '---'}` :
+                               u.role === 'parent'  ? 'Phụ huynh' :
+                               u.role === 'driver'  ? 'Tài xế' : 'Quản trị viên';
+                // Prevent admin from deleting themselves
+                const isSelf = (u._id || u.id) === (activeUser._id || activeUser.id);
+                const deleteBtn = isSelf ? '' :
+                    `<button onclick="deleteAccount('${userId}', '${u.name}')"
+                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition flex-shrink-0">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>`;
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 text-secondary">
+                            <i class="fa-solid fa-user text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                                <p class="font-bold text-sm text-gray-800 truncate">${u.name}</p>
+                                ${badge}
+                            </div>
+                            <p class="text-[11px] text-gray-400 truncate">${sub}</p>
+                        </div>
+                        ${deleteBtn}
+                    </div>`;
+            }).join('');
+        }
+
+        // =====================================================================
+        // TOAST
+        // =====================================================================
+        function showToast(title, msg, isError = false) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastMsg').innerText   = msg;
+            if (isError) { t.classList.remove('bg-gray-900'); t.classList.add('bg-red-600'); }
+            else         { t.classList.add('bg-gray-900'); t.classList.remove('bg-red-600'); }
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 4000);
+        }
+    </script>
+</body>
+</html>

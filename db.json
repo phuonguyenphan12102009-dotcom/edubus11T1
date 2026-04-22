@@ -1,0 +1,420 @@
+{
+  "buses": [
+    {
+      "_id": "mo9mvyvavd4el",
+      "id": 1,
+      "plate": "64B-111.11",
+      "capacity": 40,
+      "route": "Tuyến A"
+    },
+    {
+      "_id": "mo9mvyvaykjjt",
+      "id": 2,
+      "plate": "64B-222.22",
+      "capacity": 35,
+      "route": "Tuyến B"
+    },
+    {
+      "_id": "mo9mvyva1c9c6",
+      "id": 3,
+      "plate": "64B-333.33",
+      "capacity": 30,
+      "route": "Tuyến C"
+    }
+  ],
+  "stops": [
+    {
+      "_id": "mo9mvyvaucufv",
+      "id": 1,
+      "name": "Trạm 1 – Trung tâm",
+      "lat": 10.253,
+      "lng": 105.972,
+      "eta": "06:10",
+      "actual": "06:11",
+      "status": "passed",
+      "busId": "1"
+    },
+    {
+      "_id": "mo9mvyva8100f",
+      "id": 2,
+      "name": "Trạm 2 – Ngã tư Tây",
+      "lat": 10.257,
+      "lng": 105.976,
+      "eta": "06:18",
+      "actual": "06:20",
+      "status": "passed",
+      "busId": "1"
+    },
+    {
+      "_id": "mo9mvyvaif32x",
+      "id": 3,
+      "name": "Trạm 3 – Chợ cũ",
+      "lat": 10.261,
+      "lng": 105.979,
+      "eta": "06:25",
+      "actual": "--:--",
+      "status": "next",
+      "busId": "1"
+    },
+    {
+      "_id": "mo9mvyva4tt4z",
+      "id": 4,
+      "name": "Trạm 4 – Cầu Thiềng Đức",
+      "lat": 10.265,
+      "lng": 105.982,
+      "eta": "06:33",
+      "actual": "--:--",
+      "status": "pending",
+      "busId": "1"
+    },
+    {
+      "_id": "mo9mvyvat8uuh",
+      "id": 5,
+      "name": "Trạm 5 – Trường",
+      "lat": 10.27,
+      "lng": 105.987,
+      "eta": "06:45",
+      "actual": "--:--",
+      "status": "pending",
+      "busId": "1"
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "password": "$2a$10$m9DQm88/crGkP.uhB14wPO9Qk5WwamTGgfYi7lfzNoQK93ZikTRAW",
+      "name": "Quản trị viên",
+      "role": "admin",
+      "_id": "mo9mvyva2yxzi",
+      "id": "mo9mvyva2yxzi"
+    },
+    {
+      "username": "tx01",
+      "password": "$2a$10$Ouqxra/dX4b5UVthW9Zxzu5DpVlo3inFoc3TkTfvbqh2rsY0Q9RZy",
+      "name": "Tài xế Nguyễn Văn A",
+      "role": "driver",
+      "_id": "mo9mvyx8w9afc",
+      "id": "mo9mvyx8w9afc"
+    },
+    {
+      "username": "tx02",
+      "password": "$2a$10$T2MX1mFyNQTjLkALB6t/e.lhBFr8eHS1mJVOzJkNH1bAgnWrTsp1y",
+      "name": "Tài xế Trần Văn Bình",
+      "role": "driver",
+      "_id": "mo9mvyzlv17ko",
+      "id": "mo9mvyzlv17ko"
+    },
+    {
+      "username": "tx03",
+      "password": "$2a$10$medFqvSfC2.YkbPW1WO0u.4elvNJYCpBxZQ34lx/RnsnR8ptkVQEy",
+      "name": "Tài xế Lê Minh Cường",
+      "role": "driver",
+      "_id": "mo9mvz1fm6mvp",
+      "id": "mo9mvz1fm6mvp"
+    },
+    {
+      "username": "ph01",
+      "password": "$2a$10$BXQl20c50WjfIUsiZQ4NTO66MzXaTZprDHU7CRAoJXRLZwUprKyYu",
+      "name": "Phụ huynh Trần Văn Hùng",
+      "role": "parent",
+      "_id": "mo9mvz3un21sa",
+      "id": "mo9mvz3un21sa"
+    },
+    {
+      "username": "ph02",
+      "password": "$2a$10$cD9zrQjgE10x3Pn0OzQabeKK8.kbEL2ODKzhQuPVe1UhuWVO58Kvq",
+      "name": "Phụ huynh Lê Thị Mai",
+      "role": "parent",
+      "_id": "mo9mvz6976h5m",
+      "id": "mo9mvz6976h5m"
+    },
+    {
+      "username": "hs01",
+      "password": "$2a$10$AoQcZadV40m8T3/rRooC6Obn4el.l99MqXY.ekTcv4QFaOhsu3UJO",
+      "name": "Trần Thị Bảo Ngọc",
+      "role": "student",
+      "class": "10A1",
+      "busId": "1",
+      "startStopId": 1,
+      "isBoarded": false,
+      "_id": "mo9mvz8pl5l6n",
+      "id": "mo9mvz8pl5l6n"
+    },
+    {
+      "username": "hs02",
+      "password": "$2a$10$WM/Gihymf6kZQH56ztNQhOBAU0Nnd4Cg2t1JYemWRbpyl9HYEmsre",
+      "name": "Nguyễn Minh Khoa",
+      "role": "student",
+      "class": "10A1",
+      "busId": "1",
+      "startStopId": 1,
+      "isBoarded": false,
+      "_id": "mo9mvzb4au7wk",
+      "id": "mo9mvzb4au7wk"
+    },
+    {
+      "username": "hs03",
+      "password": "$2a$10$LcqcE2xf7RocVlt5X1Keneio6DhUSVj6S1i4RskaM5Ug/l0amdGx6",
+      "name": "Lê Thị Hồng Nhung",
+      "role": "student",
+      "class": "10A2",
+      "busId": "1",
+      "startStopId": 2,
+      "isBoarded": false,
+      "_id": "mo9mvzdknfsvb",
+      "id": "mo9mvzdknfsvb"
+    },
+    {
+      "username": "hs04",
+      "password": "$2a$10$kbeAKUA9nwbhyuTtJEOJm.wucPcyhY3S8yqFLwIKw4kD/BOK9mXAW",
+      "name": "Phạm Quốc Hùng",
+      "role": "student",
+      "class": "10A2",
+      "busId": "1",
+      "startStopId": 2,
+      "isBoarded": false,
+      "_id": "mo9mvzg005y72",
+      "id": "mo9mvzg005y72"
+    },
+    {
+      "username": "hs05",
+      "password": "$2a$10$wc0AIdkcJIzX5cx9z3xMMOLv.Yvavhe30sNWjw9mBk1Wa7M4ZQtA.",
+      "name": "Võ Thị Thanh Thảo",
+      "role": "student",
+      "class": "11T1",
+      "busId": "1",
+      "startStopId": 3,
+      "isBoarded": false,
+      "_id": "mo9mvzif5vzek",
+      "id": "mo9mvzif5vzek"
+    },
+    {
+      "username": "hs06",
+      "password": "$2a$10$zlVlj7Y7AY4vXYi3B4zIdu4F1PVjnIPdZEWz9H4tvDjLk8fudlGpu",
+      "name": "Đặng Hữu Phước",
+      "role": "student",
+      "class": "11T1",
+      "busId": "1",
+      "startStopId": 3,
+      "isBoarded": false,
+      "_id": "mo9mvzkvou6wl",
+      "id": "mo9mvzkvou6wl"
+    },
+    {
+      "username": "hs07",
+      "password": "$2a$10$n9B4FZHFUEMWQ4qaCjme7eTH6TG.he7hMKYbNj5ZvvJxm4KpAmtT6",
+      "name": "Huỳnh Thị Kim Ngân",
+      "role": "student",
+      "class": "11A1",
+      "busId": "1",
+      "startStopId": 4,
+      "isBoarded": false,
+      "_id": "mo9mvznaeakxk",
+      "id": "mo9mvznaeakxk"
+    },
+    {
+      "username": "hs08",
+      "password": "$2a$10$WVCr5/5UMcBMV4qQzV0Y6OEd0I3NWHqFhQ45k.qR2Q/AMsPwbK.eW",
+      "name": "Bùi Văn Tâm",
+      "role": "student",
+      "class": "11A1",
+      "busId": "1",
+      "startStopId": 4,
+      "isBoarded": false,
+      "_id": "mo9mvzpp23rbi",
+      "id": "mo9mvzpp23rbi"
+    },
+    {
+      "username": "hs09",
+      "password": "$2a$10$3OhlFtiTTEYSGm4Do7ZRjuJjjipywhHfvNMTovlRDKMIMWIBQ23Rm",
+      "name": "Trương Thị Lan",
+      "role": "student",
+      "class": "12A1",
+      "busId": "1",
+      "startStopId": 5,
+      "isBoarded": false,
+      "_id": "mo9mvzs47o9y4",
+      "id": "mo9mvzs47o9y4"
+    },
+    {
+      "username": "hs10",
+      "password": "$2a$10$biDeuCXfY4xi3jnqZ5MRL.TTqUfn0gUI2R5wTWOqrGIe8BjB/Mc3O",
+      "name": "Lý Minh Tuấn",
+      "role": "student",
+      "class": "12A1",
+      "busId": "1",
+      "startStopId": 5,
+      "isBoarded": false,
+      "_id": "mo9mvzujwz9e0",
+      "id": "mo9mvzujwz9e0"
+    },
+    {
+      "username": "hs11",
+      "password": "$2a$10$I8vviudbHcQ82PoiFZY5s.1LaNOTqvsUBc5kBEauxBUFgX9U.mNm6",
+      "name": "Phan Thị Mỹ Duyên",
+      "role": "student",
+      "class": "10B1",
+      "busId": "2",
+      "startStopId": 1,
+      "isBoarded": false,
+      "_id": "mo9mvzwxt9x0c",
+      "id": "mo9mvzwxt9x0c"
+    },
+    {
+      "username": "hs12",
+      "password": "$2a$10$JM1AsXiasR.S9ou1sAu8xOOZ0RISIBhzRb3iTKHGyRzb5OzHMvroO",
+      "name": "Ngô Văn Lộc",
+      "role": "student",
+      "class": "10B1",
+      "busId": "2",
+      "startStopId": 1,
+      "isBoarded": false,
+      "_id": "mo9mvzzdvu1i6",
+      "id": "mo9mvzzdvu1i6"
+    },
+    {
+      "username": "hs13",
+      "password": "$2a$10$GcUFCuOZ4ai8nwMzzNGAt.yrG5EOE4x4suRzfW1PNlt0mrVv6kyMK",
+      "name": "Đinh Thị Thu Hà",
+      "role": "student",
+      "class": "10B2",
+      "busId": "2",
+      "startStopId": 2,
+      "isBoarded": false,
+      "_id": "mo9mw01sco6kp",
+      "id": "mo9mw01sco6kp"
+    },
+    {
+      "username": "hs14",
+      "password": "$2a$10$ir3hP7F811oWBMtDsWX7ReR4Lcb4WwS8Pg40iggf//6omG13PgBQO",
+      "name": "Trần Văn Khải",
+      "role": "student",
+      "class": "10B2",
+      "busId": "2",
+      "startStopId": 3,
+      "isBoarded": false,
+      "_id": "mo9mw047jhk5j",
+      "id": "mo9mw047jhk5j"
+    },
+    {
+      "username": "hs15",
+      "password": "$2a$10$59.dzk4e4a7PmHGz6Xa5ue86atDEsgOIQrEuHBetPXmizbilJIY3.",
+      "name": "Lê Thị Bích Phượng",
+      "role": "student",
+      "class": "11B1",
+      "busId": "2",
+      "startStopId": 3,
+      "isBoarded": false,
+      "_id": "mo9mw06nvzjmh",
+      "id": "mo9mw06nvzjmh"
+    },
+    {
+      "username": "hs16",
+      "password": "$2a$10$e1CzkDPN5rNKSfHBeYvPHePk1HOqmcdwqm63wStQG6DYgXlmX81aq",
+      "name": "Vũ Hoàng Nam",
+      "role": "student",
+      "class": "11B1",
+      "busId": "2",
+      "startStopId": 4,
+      "isBoarded": false,
+      "_id": "mo9mw0926hzev",
+      "id": "mo9mw0926hzev"
+    },
+    {
+      "username": "hs17",
+      "password": "$2a$10$DFbNMbq22lp/eIVvutrEae1NDUIGCQG5klcm69KIX0keZrzTI8UHG",
+      "name": "Dương Thị Hoa",
+      "role": "student",
+      "class": "12B1",
+      "busId": "2",
+      "startStopId": 4,
+      "isBoarded": false,
+      "_id": "mo9mw0bg2slym",
+      "id": "mo9mw0bg2slym"
+    },
+    {
+      "username": "hs18",
+      "password": "$2a$10$ob5GA29c5XdbafSej4LweeTn6oDK7Qn70VYss5b1jb2cjdPhayORq",
+      "name": "Hồ Văn Phong",
+      "role": "student",
+      "class": "12B1",
+      "busId": "2",
+      "startStopId": 5,
+      "isBoarded": false,
+      "_id": "mo9mw0dsjtjyc",
+      "id": "mo9mw0dsjtjyc"
+    },
+    {
+      "username": "hs19",
+      "password": "$2a$10$PBxkp5WLVsBDT5tegoPY0.MaHGfQuvKfQHA4tD7lHY5D7eyrVsAPu",
+      "name": "Mai Thị Xuân",
+      "role": "student",
+      "class": "10C1",
+      "busId": "3",
+      "startStopId": 1,
+      "isBoarded": false,
+      "_id": "mo9mw0g7rkki4",
+      "id": "mo9mw0g7rkki4"
+    },
+    {
+      "username": "hs20",
+      "password": "$2a$10$S./rGlAMXqg/PZqEh7yWc.XL0TRe2GF6YYmUv3wt3aB7/Avumj2uu",
+      "name": "Tô Văn Đại",
+      "role": "student",
+      "class": "10C1",
+      "busId": "3",
+      "startStopId": 2,
+      "isBoarded": false,
+      "_id": "mo9mw0in6yjx4",
+      "id": "mo9mw0in6yjx4"
+    },
+    {
+      "username": "hs21",
+      "password": "$2a$10$uPVrPRlII0T1kbuQZlyjZ.VhdAd79BjFQ5gZHNmUp4ipCo86cJZUW",
+      "name": "Cao Thị Mộng Trinh",
+      "role": "student",
+      "class": "11C1",
+      "busId": "3",
+      "startStopId": 2,
+      "isBoarded": false,
+      "_id": "mo9mw0l2doxln",
+      "id": "mo9mw0l2doxln"
+    },
+    {
+      "username": "hs22",
+      "password": "$2a$10$eK3ZnprJnxiOq54VuOscFeH069TQVjzH5wMm5cy0E8UAaAaaiEJVS",
+      "name": "Đỗ Văn Thịnh",
+      "role": "student",
+      "class": "11C1",
+      "busId": "3",
+      "startStopId": 3,
+      "isBoarded": false,
+      "_id": "mo9mw0ni0v7zp",
+      "id": "mo9mw0ni0v7zp"
+    },
+    {
+      "username": "hs23",
+      "password": "$2a$10$pPA4BfayNX6OS7pI6ZHBBueQ8iKara0MZxzDhyNK62YNsppld7PqC",
+      "name": "Nguyễn Thị Quỳnh",
+      "role": "student",
+      "class": "12C1",
+      "busId": "3",
+      "startStopId": 4,
+      "isBoarded": false,
+      "_id": "mo9mw0pxmcdns",
+      "id": "mo9mw0pxmcdns"
+    },
+    {
+      "username": "hs24",
+      "password": "$2a$10$i/W7JcwrzTfGOt.mJCGwQ.hdd/Iztf9.6dGt1N94YqS3hXAiELG6W",
+      "name": "Lâm Văn Tú",
+      "role": "student",
+      "class": "12C1",
+      "busId": "3",
+      "startStopId": 5,
+      "isBoarded": false,
+      "_id": "mo9mw0sdpjjbc",
+      "id": "mo9mw0sdpjjbc"
+    }
+  ]
+}
